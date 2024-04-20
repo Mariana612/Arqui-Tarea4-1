@@ -83,34 +83,38 @@ error_occurred:
 
 count_words:
     xor rax, rax            ; Inicializar contador de palabras a 0
+    movzx rcx, byte [rdi]   ; Cargar el primer byte del buffer en rcx
 
 .loop:
-    movzx rcx, byte [rdi]   ; Cargar el siguiente byte del buffer en rcx
     test rcx, rcx           ; Comprobar si hemos llegado al final del buffer
     jz .end_count           ; Si es así, terminar el conteo
 
     cmp rcx, ' '            ; Comprobar si el byte es un espacio en blanco
-    jne .skip_space         ; Si no es un espacio, saltar al siguiente byte
+    je .skip_space          ; Si es un espacio, saltar al siguiente byte
 
-    inc rax                 ; Incrementar el contador de palabras si se encuentra un espacio
+    ; Si no es un espacio, incrementar el contador de palabras
+    cmp byte [rdi - 1], ' ' ; Comprobar si el byte anterior era un espacio
+    jne .skip_space         ; Si no lo era, saltar al siguiente byte
+    inc rax                 ; Si era un espacio, incrementar el contador de palabras
 
 .skip_space:
     inc rdi                 ; Avanzar al siguiente byte en el buffer
+    movzx rcx, byte [rdi]   ; Cargar el siguiente byte del buffer en rcx
     jmp .loop               ; Continuar el bucle
 
 .end_count:
-    cmp byte [rdi - 1], ' ' ; Verificar si la última palabra no está seguida por un espacio
-    jne .last_word          ; Si no hay espacio después de la última palabra, contarla
+    ; Verificar si la última palabra no está seguida por un espacio
+    cmp byte [rdi - 1], ' ' 
+    je .skip_last_word      ; Si hay un espacio, omitir la última palabra
+
+    ; Verificar si el último byte es un espacio en blanco
+    cmp byte [rdi - 1], 0   ; Si es el final del archivo
+    je .skip_last_word      ; Omitir la última palabra
+
+    inc rax                 ; Si no hay espacio después de la última palabra, contarla
 
 .skip_last_word:
-    ret                     ; Si todas las palabras han sido contadas, terminar la función
-
-.last_word:
-    inc rax                 ; Incrementar el contador de palabras para la última palabra
-    jmp .skip_last_word     ; Saltar al final de la función
-
-
-
+    ret                     ; Terminar la función
 
 
 
