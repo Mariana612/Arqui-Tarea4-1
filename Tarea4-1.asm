@@ -1,16 +1,18 @@
-section .bss 
-    buffer resb 1024
-
 section .data
     filename db 'input.txt', 0
     filemode db 'r', 0
     success_message db 'File opened successfully!', 0xa, 0 ; Añadido 0xa para nueva línea
     error_message db 'Failed to open file.', 0xa, 0
+    tamano_invalido db 'El archivo contiene más de 1024 caracteres', 0xa, 0
     digitos db '0123456789ABCDEF'  
     printCont dq 0
     word_count dq 0  ; Variable para almacenar el recuento de palabras
     newline_message db 0xa, 0 ; Mensaje de nueva línea
     word_message db 'Word count: ', 0xa
+    debug_string db "hola", 10, 0 ; Format string for printing character and its ASCII value
+
+section .bss 
+    buffer resb 1025
 
 section .text
     global _start
@@ -31,8 +33,10 @@ _start:
     mov eax, 3             
     mov ebx, esi            
     mov ecx, buffer        
-    mov edx, 1024         
+    mov edx, 1025         
     int 80h                 
+    
+    call count_chars
     
     ;imprimir buffer
     mov rax, 4             
@@ -72,13 +76,51 @@ error_occurred:
     mov eax, 4              
     mov ebx, 1              
     mov ecx, error_message
-    mov edx, 21            
+    mov edx, 21        
     int 80h                 
 
     ; Salir del programa con error
     mov eax, 1              
     mov ebx, 1              
     int 80h                 
+
+count_chars:
+	mov rax, buffer
+	mov rcx, 0 ;Inicializar el contador de caracteres
+	mov rdi, 0
+	
+countLoop:
+	cmp rcx, 1024 ;Compara si se llegó a los 1024 bytes
+    jg error_tamano
+
+    cmp byte [rax + rdi], 0 ;Verifica si esta en null
+    je endCount
+    
+    cmp byte [rax + rdi], 10 ;Verifica si el caracter es un salto de linea
+    je enter_char
+    
+    inc rdi
+    inc rcx
+    jmp countLoop
+
+enter_char:
+	inc rdi
+	dec rcx
+    jmp countLoop
+    
+endCount:
+	ret
+
+error_tamano:
+	; Mostrar mensaje de error
+    mov rax, 1          
+    mov rdi, 1          
+    mov rsi, tamano_invalido    
+    mov rdx, 45          
+    syscall                 
+
+    ; Salir del programa con error
+    jmp _finishCode
 
 
 count_words:
@@ -207,4 +249,9 @@ _endPrint:
     pop rsi            ;texto
     syscall
     ret
+
+_finishCode:			;finaliza codigo
+	mov rax, 60
+	mov rdi, 0
+	syscall
 
