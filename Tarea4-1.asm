@@ -6,7 +6,6 @@ section .data
     tamano_invalido db 'El archivo contiene más de 1024 caracteres', 0xa, 0
     digitos db '0123456789ABCDEF'  
     printCont dq 0
-    word_count dq 0  ; Variable para almacenar el recuento de palabras
     newline_message db 0xa, 0 ; Mensaje de nueva línea
     word_message db 'Word count: ', 0xa
     debug_string db "hola", 10, 0 ; Format string for printing character and its ASCII value
@@ -156,7 +155,7 @@ count_words:
     inc rax                 ; Si no hay espacio después de la última palabra, contarla
 
 .skip_last_word:
-    ret                     ; Terminar la función
+    ret      
 
 
 
