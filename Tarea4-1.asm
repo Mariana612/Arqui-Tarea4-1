@@ -1,7 +1,5 @@
 section .data
     filename db 'input.txt', 0
-    filemode db 'r', 0
-    success_message db 'File opened successfully!', 0xa, 0 ; Añadido 0xa para nueva línea
     error_message db 'Failed to open file.', 0xa, 0
     tamano_invalido db 'El archivo contiene más de 1024 caracteres', 0xa, 0
     digitos db '0123456789ABCDEF'  
