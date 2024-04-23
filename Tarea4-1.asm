@@ -7,8 +7,7 @@ section .data
     digitos db '0123456789ABCDEF'  
     printCont dq 0
     newline_message db 0xa, 0 ; Mensaje de nueva línea
-    word_message db 'Word count: ', 0xa
-    debug_string db "hola", 10, 0 ; Format string for printing character and its ASCII value
+    word_message db 0xa, 'Word count: ', 0xa
 
 section .bss 
     buffer resb 1025
@@ -189,32 +188,19 @@ itoa:
     mov r10, 10                    
 
 .loop:
-    xor rdx, rdx                    ; Limpia rdx para la división
-    div r10                         ; Divide rax por rbx
-    cmp rbx, 10
-    jbe .lower_base_digits          ; Salta si la base es menor o igual a 10
+    mov rdx, 0                    
+    div r10                         
+	add rdx, "0"
+	mov [rdi +rsi], dl
+	inc rsi
+	cmp rax, 0
+	jg .loop
+	
+	mov rdx, rdi
+	lea rcx, [rdi + rsi -1]
+	jmp .reversetest
 
-    ; Maneja bases mayores que 10
-    movzx rdx, dl
-    mov dl, byte [digitos + rdx]
-    jmp .store_digit
-
-.lower_base_digits:
-    ; Maneja bases menores o iguales a 10
-    add dl, '0'                     ; Convierte el resto a un carácter ASCII
-
-.store_digit:
-    mov [rdi + rsi], dl            ; Almacena el carácter en el buffer
-    inc rsi                         ; Se mueve a la siguiente posición en el buffer
-    cmp rax, 0                      ; Verifica si el cociente es cero
-    jg .loop                        ; Si no es cero, continúa el bucle
-
-    ; Invierte la cadena
-    mov rdx, rdi
-    lea rcx, [rdi + rsi - 1]
-    jmp reversetest
-
-reverseloop:
+.reverseloop:
     mov al, [rdx]
     mov ah, [rcx]
     mov [rcx], al
@@ -222,9 +208,9 @@ reverseloop:
     inc rdx
     dec rcx
 
-reversetest:
+.reversetest:
     cmp rdx, rcx
-    jl reverseloop
+    jl .reverseloop
 
     mov rax, rsi                    ; Devuelve la longitud de la cadena
     ret
