@@ -16,39 +16,22 @@ section .text
     global _start
 
 _start:
-    ; Abrir el archivo
-    mov eax, 5              ; syscall para abrir un archivo
-    mov ebx, filename       ; dirección del nombre del archivo
-    mov ecx, 0              ; flags (0 para solo lectura)
-    int 80h
+    call _openFile		; Abre el archivo a leer
 
-    cmp eax, -1             ; Comprobar si hay error al abrir el archivo
-    je error_occurred       ; Si eax es -1, se produjo un error
+    cmp eax, -1         	; Comprobar si hay error al abrir el archivo
+    je error_occurred   	; Si eax es -1, se produjo un error
 
-    mov esi, eax            ; Guardar el descriptor del archivo en esi
+    mov esi, eax        	; Guardar el descriptor del archivo en esi
+    call _readFile
+              
+    
+    call count_chars     
 
-    ; Leer el contenido del archivo
-    mov eax, 3             
-    mov ebx, esi            
-    mov ecx, buffer        
-    mov edx, 1025         
-    int 80h                 
+    mov rax, buffer
+    call _genericprint             
     
-    call count_chars
-    
-    ;imprimir buffer
-    mov rax, 4             
-    mov rbx, 1             
-    mov rcx, buffer      
-    mov rdx, 1024          
-    int 80h                 
-    
-    ; Mostrar el recuento de palabras
-    mov eax, 4             
-    mov ebx, 1             
-    mov ecx, word_message 
-    mov edx, 13            
-    int 80h                 
+    mov rax, word_message	; Mostrar el recuento de palabras	
+    call _genericprint               
 
 
     ; Asegurar que el puntero al buffer apunte al comienzo del texto
@@ -69,18 +52,25 @@ _start:
     xor ebx, ebx            
     int 80h                
 
-error_occurred:
-    ; Mostrar mensaje de error
-    mov eax, 4              
-    mov ebx, 1              
-    mov ecx, error_message
-    mov edx, 21        
-    int 80h                 
+error_occurred:           
+	mov rax, error_message
+	call _genericprint
+	jmp _finishCode
+    	              
+                 
+_openFile:
+    	mov rax, 2          	; Para abrir el documento
+    	mov rdi, filename      	; Documento a leer
+   	mov rsi, 0              ; read only
+    	syscall                 
+	ret
 
-    ; Salir del programa con error
-    mov eax, 1              
-    mov ebx, 1              
-    int 80h                 
+_readFile:
+	mov eax, 0              ; Para leer el documento
+	mov edi, esi             
+	mov rsi, buffer         ; Pointer a buffer
+	mov edx, 1025           ; Tamano
+	syscall
 
 count_chars:
 	mov rax, buffer
