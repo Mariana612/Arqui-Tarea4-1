@@ -130,43 +130,65 @@ error_tamano:
 
 
 count_words:
-    xor rax, rax            ; Inicializar contador de palabras a 0
+    xor rax, rax            
+    xor rbx, rbx            
     movzx rcx, byte [rdi]   ; Cargar el primer byte del buffer en rcx
 
 .loop:
     test rcx, rcx           ; Comprobar si hemos llegado al final del buffer
-    jz .end_count           ; Si es así, terminar el conteo
+    jz .end_count       
 
     cmp rcx, ' '            ; Comprobar si el byte es un espacio en blanco
-    je .skip_space          ; Si es un espacio, saltar al siguiente byte
+    je .check_word 
 
-    ; Si no es un espacio, incrementar el contador de palabras
-    cmp byte [rdi - 1], ' ' ; Comprobar si el byte anterior era un espacio
-    jne .skip_space         ; Si no lo era, saltar al siguiente byte
-    inc rax                 ; Si era un espacio, incrementar el contador de palabras
+    cmp rcx, 10             ; Comprobar si el byte es un salto de línea
+    je .check_word    
 
-.skip_space:
+    cmp rcx, ','            ; Comprobar si el byte es una coma
+    je .check_word        
+
+    cmp rcx, '.'            ; Comprobar si el byte es un punto
+    je .check_word 
+    
+    cmp rcx, '?'            ; Comprobar si el byte es un signo de pregunta  
+    je .check_word     
+    
+    cmp rcx, '¿'            ; Comprobar si el byte es un signo de pregunta  
+    je .check_word    
+    
+    cmp rcx, '!'            ; Comprobar si el byte es un signo de exclamacion  
+    je .check_word  
+    
+    cmp rcx, '¡'            ; Comprobar si el byte es un signo de exclamacion  
+    je .check_word  
+
+    ; Activar la bandera de palabra si el byte actual no es un espacio, salto de línea o signo de puntuación
+    mov rbx, 1              ; Activar la bandera de palabra
+    jmp .next_byte          ; Saltar al siguiente byte
+
+.check_word:
+    cmp rbx, 0              ; Comprobar si la bandera de palabra está activada
+    je .next_byte           
+
+    ; Incrementar el contador de palabras, desactivar la bandera de palabra
+    inc rax                 ; Incrementar el contador de palabras
+    xor rbx, rbx            ; Desactivar la bandera de palabra
+
+.next_byte:
     inc rdi                 ; Avanzar al siguiente byte en el buffer
     movzx rcx, byte [rdi]   ; Cargar el siguiente byte del buffer en rcx
-    jmp .loop               ; Continuar el bucle
+    jmp .loop               
 
 .end_count:
-    ; Verificar si la última palabra no está seguida por un espacio
-    cmp byte [rdi - 1], ' ' 
-    je .skip_last_word      ; Si hay un espacio, omitir la última palabra
+    cmp rbx, 1              ; Comprobar si estamos dentro de una palabra al final del buffer
+    jne .end_count_done     
 
-    ; Verificar si el último byte es un espacio en blanco
-    cmp byte [rdi - 1], 0   ; Si es el final del archivo
-    je .skip_last_word      ; Omitir la última palabra
+    inc rax                 ; Incrementar el contador si estamos dentro de una palabra al final
+    jmp .end_count_done
 
-    inc rax                 ; Si no hay espacio después de la última palabra, contarla
-
-.skip_last_word:
-    ret      
-
-
-
-
+.end_count_done:
+    ret                     ; Terminar la función
+                  
 
 _startItoa:
     mov rdi, buffer
