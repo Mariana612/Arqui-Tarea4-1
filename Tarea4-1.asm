@@ -102,6 +102,14 @@ countLoop:
     jmp countLoop
 
 enter_char:
+	cmp byte [rax + rdi + 1], 0 ;Verifica si el caracter es un salto de linea
+    je enter_final
+    
+    inc rdi
+    inc rcx
+    jmp countLoop
+     
+enter_final:    
 	inc rdi
 	dec rcx
     jmp countLoop
