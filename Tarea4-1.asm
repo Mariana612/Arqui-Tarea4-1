@@ -1,6 +1,6 @@
 section .data
     filename db 'input.txt', 0
-    error_message db 'Archivo no pudo ser abierto.', 0xa, 0
+    error_message db 'Failed to open file.', 0xa, 0
     tamano_invalido db 'El archivo contiene más de 1024 caracteres', 0xa, 0
     digitos db '0123456789ABCDEF'  
     printCont dq 0
@@ -16,10 +16,10 @@ section .text
 _start:
     call _openFile		; Abre el archivo a leer
 
-    cmp rax, -2         	; Comprobar si hay error al abrir el archivo
-    je error_occurred   	; Si rax es -1, se produjo un error
+    cmp eax, -1         	; Comprobar si hay error al abrir el archivo
+    je error_occurred   	; Si eax es -1, se produjo un error
 
-    mov rsi, rax        	; Guardar el descriptor del archivo en rsi
+    mov esi, eax        	; Guardar el descriptor del archivo en esi
     call _readFile
               
     
@@ -57,17 +57,17 @@ error_occurred:
     	              
                  
 _openFile:
-    mov rax, 2          	; Para abrir el documento
-    mov rdi, filename      	; Documento a leer
+    	mov rax, 2          	; Para abrir el documento
+    	mov rdi, filename      	; Documento a leer
    	mov rsi, 0              ; read only
-    syscall                 
+    	syscall                 
 	ret
 
 _readFile:
-	mov rax, 0              ; Para leer el documento
-	mov rdi, rsi             
+	mov eax, 0              ; Para leer el documento
+	mov edi, esi             
 	mov rsi, buffer         ; Pointer a buffer
-	mov rdx, 1025           ; Tamano
+	mov edx, 1025           ; Tamano
 	syscall
 
 count_chars:
@@ -92,7 +92,7 @@ countLoop:
 enter_char:
 	cmp byte [rax + rdi + 1], 0 ;Verifica si el caracter es un salto de linea
     je enter_final
-  
+    
     inc rdi
     inc rcx
     jmp countLoop
@@ -138,21 +138,34 @@ count_words:
     cmp rcx, '.'            ; Comprobar si el byte es un punto
     je .check_word 
     
-    cmp rcx, '?'            ; Comprobar si el byte es un signo de pregunta  
-    je .check_word     
+    cmp rcx, '-'            
+    je .check_word
     
-    cmp rcx, '¿'            ; Comprobar si el byte es un signo de pregunta  
-    je .check_word    
+    cmp rcx, '?'            ; Comprobar si el byte es un signo de pregunta  
+    je .check_word      
     
     cmp rcx, '!'            ; Comprobar si el byte es un signo de exclamacion  
     je .check_word  
     
-    cmp rcx, '¡'            ; Comprobar si el byte es un signo de exclamacion  
-    je .check_word  
+    cmp rcx, 0xC2         
+    je .check_second_byte
 
     ; Activar la bandera de palabra si el byte actual no es un espacio, salto de línea o signo de puntuación
     mov rbx, 1              ; Activar la bandera de palabra
     jmp .next_byte          ; Saltar al siguiente byte
+
+.check_second_byte:
+    movzx rcx, byte [rdi + 1]  
+	dec rax
+    cmp rcx, 0xA1              
+    je .check_word             
+    
+    jmp .not_word                   
+
+.not_word:
+	xor rbx, rbx
+    jmp .next_byte             
+            
 
 .check_word:
     cmp rbx, 0              ; Comprobar si la bandera de palabra está activada
