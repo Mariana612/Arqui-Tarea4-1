@@ -1,6 +1,6 @@
 section .data
     filename db 'input.txt', 0
-    error_message db 'Failed to open file.', 0xa, 0
+    error_message db 'Archivo no pudo ser abierto.', 0xa, 0
     tamano_invalido db 'El archivo contiene más de 1024 caracteres', 0xa, 0
     digitos db '0123456789ABCDEF'  
     printCont dq 0
@@ -16,10 +16,10 @@ section .text
 _start:
     call _openFile		; Abre el archivo a leer
 
-    cmp eax, -1         	; Comprobar si hay error al abrir el archivo
-    je error_occurred   	; Si eax es -1, se produjo un error
+    cmp rax, -2         	; Comprobar si hay error al abrir el archivo
+    je error_occurred   	; Si rax es -1, se produjo un error
 
-    mov esi, eax        	; Guardar el descriptor del archivo en esi
+    mov rsi, rax        	; Guardar el descriptor del archivo en rsi
     call _readFile
               
     
@@ -57,17 +57,17 @@ error_occurred:
     	              
                  
 _openFile:
-    	mov rax, 2          	; Para abrir el documento
-    	mov rdi, filename      	; Documento a leer
+    mov rax, 2          	; Para abrir el documento
+    mov rdi, filename      	; Documento a leer
    	mov rsi, 0              ; read only
-    	syscall                 
+    syscall                 
 	ret
 
 _readFile:
-	mov eax, 0              ; Para leer el documento
-	mov edi, esi             
+	mov rax, 0              ; Para leer el documento
+	mov rdi, rsi             
 	mov rsi, buffer         ; Pointer a buffer
-	mov edx, 1025           ; Tamano
+	mov rdx, 1025           ; Tamano
 	syscall
 
 count_chars:
@@ -92,7 +92,7 @@ countLoop:
 enter_char:
 	cmp byte [rax + rdi + 1], 0 ;Verifica si el caracter es un salto de linea
     je enter_final
-    
+  
     inc rdi
     inc rcx
     jmp countLoop
