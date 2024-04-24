@@ -155,10 +155,12 @@ count_words:
     jmp .next_byte          ; Saltar al siguiente byte
 
 .check_second_byte:
-    movzx rcx, byte [rdi + 1]  
-	dec rax
+	mov r8, 1
+    movzx rcx, byte [rdi + r8]  
     cmp rcx, 0xA1              
-    je .check_word             
+    je .check_word_signo
+    cmp rcx, 0xBF              
+    je .check_word_signo            
     
     jmp .not_word                   
 
@@ -166,7 +168,20 @@ count_words:
 	xor rbx, rbx
     jmp .next_byte             
             
+.check_word_signo:
+    cmp rbx, 0              ; Comprobar si la bandera de palabra está activada
+    je .next_byte_signo           
 
+    ; Incrementar el contador de palabras, desactivar la bandera de palabra
+    inc rax                 ; Incrementar el contador de palabras
+    xor rbx, rbx            ; Desactivar la bandera de palabra
+    
+.next_byte_signo:
+    inc rdi                 ; Avanzar al siguiente byte en el buffer
+    inc rdi
+    movzx rcx, byte [rdi]   ; Cargar el siguiente byte del buffer en rcx
+    jmp .loop               
+    
 .check_word:
     cmp rbx, 0              ; Comprobar si la bandera de palabra está activada
     je .next_byte           
