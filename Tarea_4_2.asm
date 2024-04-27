@@ -1,14 +1,14 @@
 section .data
     filename db 'input.txt', 0
     error_message db 'Failed to open file.', 0xa, 0
-    tamano_invalido db 'El archivo contiene más de 1024 caracteres', 0xa, 0
+    tamano_invalido db 'El archivo contiene más de 2048 caracteres', 0xa, 0
     digitos db '0123456789ABCDEF'  
     printCont dq 0
     newline_message db 0xa, 0 ; Mensaje de nueva línea
     word_message db 0xa, 'Word count: ', 0xa
 
 section .bss 
-    buffer resb 1025
+    buffer resb 2050
 
 section .text
     global _start
@@ -16,10 +16,10 @@ section .text
 _start:
     call _openFile		; Abre el archivo a leer
 
-    cmp eax, -1         	; Comprobar si hay error al abrir el archivo
+    cmp rax, -2         	; Comprobar si hay error al abrir el archivo
     je error_occurred   	; Si eax es -1, se produjo un error
 
-    mov esi, eax        	; Guardar el descriptor del archivo en esi
+    mov rsi, rax        	; Guardar el descriptor del archivo en esi
     call _readFile
               
     
@@ -41,14 +41,12 @@ _start:
     call _startItoa         ; Llama a la función de conversión a cadena
 
     ; Cerrar el archivo
-    mov eax, 6             
-    mov ebx, esi        
-    int 80h                 
+    mov rax, 3             
+    mov rdi, rsi        
+    syscall                 
 
     ; Salir del programa
-    mov eax, 1             
-    xor ebx, ebx            
-    int 80h                
+    jmp _finishCode                
 
 error_occurred:           
 	mov rax, error_message
@@ -57,54 +55,62 @@ error_occurred:
     	              
                  
 _openFile:
-    	mov rax, 2          	; Para abrir el documento
-    	mov rdi, filename      	; Documento a leer
-   	mov rsi, 0              ; read only
-    	syscall                 
+    mov rax, 2          	; Para abrir el documento
+    mov rdi, filename      	; Documento a leer
+	mov rsi, 0              ; read only
+	mov rdx, 0
+    syscall                 
 	ret
 
 _readFile:
-	mov eax, 0              ; Para leer el documento
-	mov edi, esi             
+	mov rax, 0              ; Para leer el documento
+	mov rdi, rsi             
 	mov rsi, buffer         ; Pointer a buffer
-	mov edx, 1025           ; Tamano
+	mov rdx, 2050           ; Tamano
 	syscall
+	ret
 
+;Contar cantidad de caracteres y que no sean más de 2048
 count_chars:
 	mov rax, buffer
 	mov rcx, 0 ;Inicializar el contador de caracteres
-	mov rdi, 0
+	mov rdi, 0 ;Inicializar el contador de la posición del buffer
 	
 countLoop:
-	cmp rcx, 1024 ;Compara si se llegó a los 1024 bytes
-    jg error_tamano
+	cmp rcx, 2047 ;Compara si se llegó a 2048 bytes
+	je char_final ;Si se llegó al caracter 2048, ver casos de último char
 
-    cmp byte [rax + rdi], 0 ;Verifica si esta en null
-    je endCount
+continue_loop:
+    cmp byte [rax + rdi], 0 ;Verifica si se llegó al char null
+    je endCount ;Terminar loop
     
-    cmp byte [rax + rdi], 10 ;Verifica si el caracter es un salto de linea
-    je enter_char
-    
-    inc rdi
-    inc rcx
-    jmp countLoop
-
-enter_char:
-	cmp byte [rax + rdi + 1], 0 ;Verifica si el caracter es un salto de linea
-    je enter_final
-    
-    inc rdi
-    inc rcx
-    jmp countLoop
+    inc rdi ;Seguir al siguiente char
+    inc rcx ;Incrementar contador
+    jmp countLoop ;Seguir en el loop
      
-enter_final:    
+char_final: ;Se llegó al último char
+	cmp byte [rax + rdi + 1], 10 ;Verifica si el siguiente caracter es salto de linea
+	je enter_char_especial
+	jne error_tamano
+	
+enter_char_especial: ;Verificar si después del salto de línea ya se llegó al final del buffer
+	cmp byte [rax + rdi + 2], 0 ;Verifica si el siguiente caracter es null
+    je enter_final
+    jne error_tamano
+
+enter_char: ;Es un char de salto de línea
+	cmp byte [rax + rdi + 1], 0 ;Verifica si el siguiente caracter es null
+    je enter_final ;Hay 2048 caracteres
+    jne error_tamano ;Hay más de 2048 caracteres 
+
+enter_final:
+	inc rdi ;Seguir al siguiente char
 	inc rdi
-	dec rcx
-    jmp countLoop
+    jmp continue_loop  ;Se llegó al char 2048
     
 endCount:
 	ret
-
+	
 error_tamano:
 	; Mostrar mensaje de error
     mov rax, 1          
