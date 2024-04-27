@@ -6,9 +6,11 @@ section .data
     printCont dq 0
     newline_message db 0xa, 0 ; Mensaje de nueva línea
     word_message db 0xa, 'Word count: ', 0xa
+    espacio db 10
 
 section .bss 
     buffer resb 2050
+    nuevo_buffer resb 2050
 
 section .text
     global _start
@@ -23,14 +25,27 @@ _start:
     call _readFile
               
     
-    call count_chars     
+    call count_chars ;Contar chars   
 
-    mov rax, buffer
+    mov rax, buffer ;Imprimir el texto
+    call _genericprint
+    
+    ;Imprimir un espacio
+    mov rax, 1          
+    mov rdi, 1          
+    mov rsi, espacio    
+    mov rdx, 1          
+    syscall
+	
+    mov rsi, buffer
+	mov rdi, nuevo_buffer
+	call convert_upper_to_lower
+	
+	mov rax, nuevo_buffer
     call _genericprint             
     
     mov rax, word_message	; Mostrar el recuento de palabras	
-    call _genericprint               
-
+    call _genericprint
 
     ; Asegurar que el puntero al buffer apunte al comienzo del texto
 	mov rdi, buffer         ; Puntero al inicio del buffer
@@ -113,15 +128,40 @@ endCount:
 	
 error_tamano:
 	; Mostrar mensaje de error
-    mov rax, 1          
-    mov rdi, 1          
-    mov rsi, tamano_invalido    
-    mov rdx, 45          
-    syscall                 
+    mov rax, tamano_invalido
+    call _genericprint                 
 
     ; Salir del programa con error
     jmp _finishCode
 
+convert_upper_to_lower:
+	movzx rax, byte [rsi]  ; carga la respuesta para ser convertida
+			
+	cmp al, 0              ; compara si esta vacia        
+	je _conversionFinalizada
+	
+	cmp al, 'A'          
+	jl _seguir_loop
+	cmp al, 'Z'         
+	jg _seguir_loop
+	add al, 32
+	jmp _guardaConversion
+
+_seguir_loop:
+	mov [rdi], al
+	inc rsi
+	inc rdi
+	jmp convert_upper_to_lower
+
+_guardaConversion:
+	mov [rdi], al
+	inc rsi
+	inc rdi
+	jmp convert_upper_to_lower
+
+_conversionFinalizada:						   
+	mov byte [rdi], 0      ; Cambia a null y termina
+	ret
 
 count_words:
     xor rax, rax            
