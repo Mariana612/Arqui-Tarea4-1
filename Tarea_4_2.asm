@@ -323,7 +323,6 @@ extract_words:
      .skip_unicode:
         ; Es un carácter especial, avanza dos bytes
         inc esi
-        inc esi
         jmp .next_word
 
     .next_word:
