@@ -7,10 +7,18 @@ section .data
     newline_message db 0xa, 0 ; Mensaje de nueva línea
     word_message db 0xa, 'Word count: ', 0xa
     espacio db 10
+	array_len equ 2050
+	space db ' ', 0
+	array_size equ 2050          ; Tamaño máximo del array
+    array_times times array_size db 0
+    word_count dq 0             ; Contador de palabras
+
+    
 
 section .bss 
     buffer resb 2050
     nuevo_buffer resb 2050
+    
 
 section .text
     global _start
@@ -54,7 +62,13 @@ _start:
     ; Convertir el recuento de palabras a cadena y mostrarlo
     mov rsi, rax
     call _startItoa         ; Llama a la función de conversión a cadena
-
+    
+	mov esi, nuevo_buffer
+	mov edi, array_times
+	call extract_words
+	
+	mov rdi, array_times
+	call print_array
     ; Cerrar el archivo
     mov rax, 3             
     mov rdi, rsi        
@@ -163,6 +177,8 @@ _conversionFinalizada:
 	mov byte [rdi], 0      ; Cambia a null y termina
 	ret
 
+
+
 count_words:
     xor rax, rax            
     xor rbx, rbx            
@@ -250,8 +266,102 @@ count_words:
 
 .end_count_done:
     ret                     ; Terminar la función
-                  
+     
+     
+extract_words:
+    ;   ESI: Puntero al buffer de entrada
+    ;   EDI: Puntero al array de salida
 
+    xor ecx, ecx  ; Contador de palabras
+    xor eax, eax  ; Registro para mantener temporalmente caracteres
+    .loop:
+        mov al, byte [esi]  ; Lee el siguiente byte del buffer
+
+        test al, al
+        jz .done
+
+        ; Verifica si el carácter es un espacio o un terminador de palabra
+        cmp al, ' '
+        je .next_word
+        
+        cmp al, '.'
+        je .next_word
+        
+        cmp al, ','
+        je .next_word
+     
+        cmp al, 10
+        je .next_word
+
+		cmp al, '?'
+        je .next_word
+        
+        cmp al, '!'
+        je .next_word
+        
+        cmp al, 0xC2
+        je .check_unicode
+
+        ; Guarda el carácter en el array de salida y avanza el puntero
+        mov [edi], al
+        inc edi
+
+        jmp .continue
+	
+	.check_unicode:
+        mov al, byte [esi + 1]
+        cmp al, 0xBF ; Comprueba si es un carácter ¿
+        je .skip_unicode
+        
+        cmp al, 0xA1 ; Comprueba si es un carácter ¡
+        je .skip_unicode
+        
+        ; No es un carácter especial, avanza un byte
+        inc esi
+        jmp .next_word
+        
+     .skip_unicode:
+        ; Es un carácter especial, avanza dos bytes
+        inc esi
+        inc esi
+        jmp .next_word
+
+    .next_word:
+        ; Verifica si ya hemos guardado una palabra
+        cmp ecx, 2050 ; Cantidad max de palabras a extraer
+        jge .done
+
+        inc ecx
+
+    .continue:
+        inc esi 
+        jmp .loop
+
+    .done:
+        ret
+
+print_array:
+    mov rdx, array_size         ; Configura rdx como la longitud máxima del array
+    mov rsi, array_times        ; Configura rsi como el puntero al array
+
+print_loop:
+    cmp byte [rsi], 0
+    je exit_print_loop         ; Si es así, salta a la etiqueta exit_print_loop
+
+    movzx eax, byte [rsi]      
+    mov edi, 1
+    mov edx, 1              
+    mov eax, 1             
+    syscall                  
+    
+
+    inc rsi                    ; Avanza al siguiente byte en el array
+    jmp print_loop             ; Repite hasta que se haya impreso todo el contenido del array
+
+exit_print_loop:
+    ret                        
+
+  
 _startItoa:
     mov rdi, buffer
     mov rsi, rsi 
