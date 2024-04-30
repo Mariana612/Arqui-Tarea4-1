@@ -17,7 +17,6 @@ section .data
 section .bss 
     buffer resb 2050
     nuevo_buffer resb 2050
-    word_count resq 1             ; Contador de palabras
     
 
 section .text
@@ -60,7 +59,7 @@ _start:
 	call count_words        ; Llamar a la función count_words
 
     ; Convertir el recuento de palabras a cadena y mostrarlo
-    mov rsi, [word_count]
+    mov rsi, rax
     call _startItoa         ; Llama a la función de conversión a cadena
     
 	mov esi, nuevo_buffer
@@ -70,6 +69,14 @@ _start:
     mov rdi, array_times
     call print_array
     
+    ;Imprimir un espacio
+    mov rax, 1          
+    mov rdi, 1          
+    mov rsi, espacio    
+    mov rdx, 1          
+    syscall
+    
+    dec r13
     call sort_words
     call sort_words
     
@@ -273,7 +280,7 @@ count_words:
     jmp .end_count_done
 
 .end_count_done:
-	mov [word_count], rax
+	mov r13, rax
     ret                     ; Terminar la función
      
      
@@ -377,37 +384,40 @@ exit_print_loop:
 
 ;Ordenar palabras alfabéticamente
 sort_words:
-    mov rdx, 8 ;Set outer loop counter to number of words
-outer_loop:
-    mov rsi, array_times     ; Set source index to the beginning of the array
-    mov rdi, array_times     ; Set source index to the beginning of the array
-    mov r8, 2
+    mov rdx, r13 ;Contador de comparaciones que se deben hacer
+
+    mov rsi, array_times     ;Colocar rsi al inicio del array
+    mov rdi, array_times     ;Colocar rdi al inicio del array
+    mov r8, 2 ;Cantidad de espacios para seguir con la siguiente palabra
     mov r9, 0
-inner_loop:
-    ; Compare current word with next word
-    mov al, [rsi + r9]      ; Load first character of current word
-    mov bl, [rdi + r8]  ; Load first character of next word
-    cmp al, bl         ; Compare characters
-    jbe not_swap       ; Jump if no need to swap
-    ;Swap words
-    mov [rdi + r8], al      ; Store current word in next position
-    mov [rsi + r9], bl      ; Store next word in current position
+    
+_inner_loop:
+    ; Comparar la primera letra de la primera palabra con la primera letra de la segunda palabra
+    mov al, [rsi + r9]      ;Load la primera letra de la palabra actual a un registro
+    mov bl, [rdi + r8]  ;Load la primera letra de la siguiente palabra a un registro
+    cmp al, bl         ; Comparar las letras
+    jbe _not_swap       ; Jump so no se necesita hacer un swap
+    
+    ;Swap las palabras
+    mov [rdi + r8], al      ;Guardar la letra de la palabra actual en el espacio de la siguiente palabra
+    mov [rsi + r9], bl      ;Guardar la letra de la siguiente palabra en el espacio de la palabra actual
     
     mov r9, r8
     
     inc r8
     inc r8
     
-    jmp continue_swap
+    jmp _continue_swap
     
-not_swap:
+_not_swap:
     mov r9, r8
     inc r8
     inc r8
     
-continue_swap:
+_continue_swap:
     dec rdx            ; Decrement outer loop counter
-    jnz inner_loop     ; Continue outer loop until rdx is zero
+    jnz _inner_loop     ; Continue outer loop until rdx is zero
+    
     ret
   
 _startItoa:
