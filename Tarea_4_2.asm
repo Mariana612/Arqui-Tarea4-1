@@ -11,13 +11,13 @@ section .data
 	space db ' ', 0
 	array_size equ 2050          ; Tamaño máximo del array
     array_times times array_size db 0
-    word_count dq 0             ; Contador de palabras
 
     
 
 section .bss 
     buffer resb 2050
     nuevo_buffer resb 2050
+    word_count resq 1             ; Contador de palabras
     
 
 section .text
@@ -60,13 +60,19 @@ _start:
 	call count_words        ; Llamar a la función count_words
 
     ; Convertir el recuento de palabras a cadena y mostrarlo
-    mov rsi, rax
+    mov rsi, [word_count]
     call _startItoa         ; Llama a la función de conversión a cadena
     
 	mov esi, nuevo_buffer
     mov edi, array_times
     call extract_words
 
+    mov rdi, array_times
+    call print_array
+    
+    call sort_words
+    call sort_words
+    
     mov rdi, array_times
     call print_array
     
@@ -180,7 +186,7 @@ _conversionFinalizada:
 	ret
 
 
-
+;Contador de palabras
 count_words:
     xor rax, rax            
     xor rbx, rbx            
@@ -267,6 +273,7 @@ count_words:
     jmp .end_count_done
 
 .end_count_done:
+	mov [word_count], rax
     ret                     ; Terminar la función
      
      
@@ -368,7 +375,40 @@ print_loop:
 exit_print_loop:
     ret                        
 
-
+;Ordenar palabras alfabéticamente
+sort_words:
+    mov rdx, 8 ;Set outer loop counter to number of words
+outer_loop:
+    mov rsi, array_times     ; Set source index to the beginning of the array
+    mov rdi, array_times     ; Set source index to the beginning of the array
+    mov r8, 2
+    mov r9, 0
+inner_loop:
+    ; Compare current word with next word
+    mov al, [rsi + r9]      ; Load first character of current word
+    mov bl, [rdi + r8]  ; Load first character of next word
+    cmp al, bl         ; Compare characters
+    jbe not_swap       ; Jump if no need to swap
+    ;Swap words
+    mov [rdi + r8], al      ; Store current word in next position
+    mov [rsi + r9], bl      ; Store next word in current position
+    
+    mov r9, r8
+    
+    inc r8
+    inc r8
+    
+    jmp continue_swap
+    
+not_swap:
+    mov r9, r8
+    inc r8
+    inc r8
+    
+continue_swap:
+    dec rdx            ; Decrement outer loop counter
+    jnz inner_loop     ; Continue outer loop until rdx is zero
+    ret
   
 _startItoa:
     mov rdi, buffer
@@ -389,7 +429,6 @@ _startItoa:
     call  _genericprint
     
     ret
-
 
 ; Definición de la función ITOA
 itoa:
