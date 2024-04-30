@@ -64,11 +64,13 @@ _start:
     call _startItoa         ; Llama a la función de conversión a cadena
     
 	mov esi, nuevo_buffer
-	mov edi, array_times
-	call extract_words
-	
-	mov rdi, array_times
-	call print_array
+    mov edi, array_times
+    call extract_words
+
+    mov rdi, array_times
+    call print_array
+    
+    
     ; Cerrar el archivo
     mov rax, 3             
     mov rdi, rsi        
@@ -305,7 +307,7 @@ extract_words:
         ; Guarda el carácter en el array de salida y avanza el puntero
         mov [edi], al
         inc edi
-
+		
         jmp .continue
 	
 	.check_unicode:
@@ -326,11 +328,15 @@ extract_words:
         jmp .next_word
 
     .next_word:
+		mov byte [edi], " "  ; Agrega un carácter nulo al final de la palabra
+        inc edi            ; Avanza el puntero al siguiente espacio en el array para la próxima palabra
+        
         ; Verifica si ya hemos guardado una palabra
         cmp ecx, 2050 ; Cantidad max de palabras a extraer
         jge .done
 
-        inc ecx
+		
+        inc ecx            ; Incrementa el contador de palabras
 
     .continue:
         inc esi 
@@ -338,6 +344,8 @@ extract_words:
 
     .done:
         ret
+
+
 
 print_array:
     mov rdx, array_size         ; Configura rdx como la longitud máxima del array
@@ -359,6 +367,7 @@ print_loop:
 
 exit_print_loop:
     ret                        
+
 
   
 _startItoa:
