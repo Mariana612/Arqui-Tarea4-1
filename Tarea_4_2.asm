@@ -11,6 +11,8 @@ section .data
 	space db ' ', 0
 	array_size equ 2050          ; Tamaño máximo del array
     array_times times array_size db 0
+    msgTest dq "hola "
+    strLenght dq 0
 
     
 
@@ -25,6 +27,13 @@ section .text
     global _start
 
 _start:
+	;mov rbx, msgTest
+	;call _strLength
+	;mov qword[msgTest], "xd "
+	;mov rbx, msgTest
+	;call _strLength
+	;jmp _finishCode ;Testeo
+	
     call _openFile		; Abre el archivo a leer
 
     cmp rax, -2         	; Comprobar si hay error al abrir el archivo
@@ -103,8 +112,30 @@ error_occurred:
 	mov rax, error_message
 	call _genericprint
 	jmp _finishCode
-    	              
-                 
+
+_strLength:
+    mov qword [strLenght], 0  ; Inicializa la variable de longitud a 0
+    push rbx                  ; Preserva el valor de RBX en la pila
+    xor rcx, rcx              ; Pone el contador de longitud RCX a 0
+
+_count_loop:
+    cmp byte [rbx], 32        ; Compara el carácter actual con espacio (ASCII 32)
+    je _end_loop              ; Salta a _end_loop si encuentra un espacio
+    inc rbx                   ; Avanza al siguiente carácter
+    inc rcx                   ; Incrementa el contador de longitud
+    jmp _count_loop           ; Repite el bucle
+
+_end_loop:
+    inc rcx                   ; Incrementa RCX para incluir el último carácter antes del espacio
+    mov qword [strLenght], rcx ; Guarda la longitud en la variable strLenght
+    pop rbx                   ; Restaura el valor original de RBX
+
+    mov rsi, [strLenght]
+    call _startItoa
+
+    ret                       ; Retorna de la función
+
+       
 _openFile:
     mov rax, 2          	; Para abrir el documento
     mov rdi, filename      	; Documento a leer
@@ -504,7 +535,7 @@ get_word_length:
 
 
 ;ITOA  
-_startItoa:
+_startItoa: 
     mov rdi, buffer
     mov rsi, rsi 
     mov rbx, 10       ; La base
