@@ -13,10 +13,6 @@ section .data
     array_times times array_size db 0
     strLenght dq 0
     specialLenght dq 0
-    
-    msgTest dq "hola " 						; ELIMINAR SOLO SE USA PARA EJEMPLO
-    array_timesTest db "pantufla vaca caballo serpiente " 	; ELIMINAR SOLO SE USA PARA EJEMPLO
-    array_timesTest2 db "holaCarmen vaca caballo serpiente " 	; ELIMINAR SOLO SE USA PARA EJEMPLO
 
 
     
@@ -45,7 +41,7 @@ _start:
 	;call _contEspecial			; ELIMINAR SOLO SE USA PARA EJEMPLO
 	
 
-	jmp _finishCode ;Testeo			; ELIMINAR SOLO SE USA PARA EJEMPLO
+	;jmp _finishCode ;Testeo			; ELIMINAR SOLO SE USA PARA EJEMPLO
 	
     call _openFile		; Abre el archivo a leer
 
@@ -102,6 +98,9 @@ _start:
     
     dec r13
     call sort_words
+   
+    ;mov rax, palabra1	; Mostrar el recuento de palabras	
+    ;call _genericprint
     
     ;mov rax, palabra1	; Mostrar el recuento de palabras	
     ;call _genericprint
@@ -109,10 +108,9 @@ _start:
     ;mov rax, palabra2	; Mostrar el recuento de palabras	
     ;call _genericprint
     
-    ;mov rdi, array_times
-    ;call print_array
-    
-    
+    mov rdi, array_times
+    call print_array
+     
     ; Cerrar el archivo
     mov rax, 3             
     mov rdi, rsi        
@@ -129,6 +127,7 @@ error_occurred:
 _strLength:
     mov qword [strLenght], 0  ; Inicializa la variable de longitud a 0
     push rbx                  ; Preserva el valor de RBX en la pila
+    push rcx
     xor rcx, rcx              ; Pone el contador de longitud RCX a 0
 
 _count_loop:
@@ -141,11 +140,12 @@ _count_loop:
 _end_loop:
     inc rcx                   ; Incrementa RCX para incluir el último carácter antes del espacio
     mov qword [strLenght], rcx ; Guarda la longitud en la variable strLenght
+    pop rcx
     pop rbx                   ; Restaura el valor original de RBX
 
-    ;mov rsi, [strLenght]	; ELIMINAR SOLO SE USA PARA EJEMPLO
-    ;call _startItoa		; ELIMINAR SOLO SE USA PARA EJEMPLO
-
+    mov rsi, [strLenght]
+    call _startItoa         ; Llama a la función de conversión a cadena
+    
     ret                       ; Retorna de la función
 
 _contEspecial:
@@ -170,8 +170,6 @@ segundo_espacio:
     je segundo_espacio                               ; Si hay otro espacio, sigue buscando
 
     mov [specialLenght], rcx
-    mov rsi, [specialLenght]	; ELIMINAR SOLO SE USA PARA EJEMPLO
-    call _startItoa		; ELIMINAR SOLO SE USA PARA EJEMPLO
 
     pop rax
     pop rcx
@@ -466,17 +464,19 @@ exit_print_loop:
 ;Ordenar palabras alfabéticamente
 sort_words:
     mov rdx, r13 ;Contador de comparaciones que se deben hacer
-
-    mov rsi, array_times     ;Colocar rsi al inicio del array
-    mov rdi, array_times     ;Colocar rdi al inicio del array
-    mov r8, 4 ;Cantidad de espacios para seguir con la siguiente palabra
-    mov r9, 0
+    mov rsi, array_times ;Colocar rsi al inicio del array
+    
+    mov rdi, array_times
+	call _contEspecial ;Se cuentan los chars para llegar a la segunda palabra
+	
+    mov r8, [specialLenght] ;Empieza en la segunda palabra
+    mov r9, 0 ;Empieza en la primera palabra
     
 _inner_loop:
 	mov r12, r9
 	mov r15, r8
 	call guardar_palabras
-    ; Comparar la primera letra de la primera palabra con la primera letra de la segunda palabra
+    ;Comparar la primera letra de la primera palabra con la primera letra de la segunda palabra
     mov al, [rsi + r9]      ;Load la primera letra de la palabra actual a un registro
     mov bl, [rdi + r8]  ;Load la primera letra de la siguiente palabra a un registro
     xor rax, rax
@@ -485,27 +485,95 @@ _inner_loop:
     je _not_swap       ; Jump si no se necesita hacer un swap
     cmp rax, 1
     je _continue_swap
+	;Apagar bandera
+	call guardar_palabras ;Función donde se guardan las palabras que se van a comparar
+	
+	push rax
+	push rdi
+	push rsi
+	push rdx
+	mov rax, 1          
+    mov rdi, 1          
+    mov rsi, palabra1    
+    mov rdx, 2050          
+    syscall
+    
+    mov rax, 1          
+    mov rdi, 1          
+    mov rsi, espacio    
+    mov rdx, 1          
+    syscall
+    
+    mov rax, 1          
+    mov rdi, 1          
+    mov rsi, palabra2    
+    mov rdx, 2050          
+    syscall
+    
+    mov rax, 1          
+    mov rdi, 1          
+    mov rsi, espacio    
+    mov rdx, 1          
+    syscall
+    pop rdx
+    pop rsi
+    pop rdi
+    pop rax
+    
+compare_palabras:
+	cmp rax, 2
+	je _not_swap
+	
+	cmp rax, 3
+	je _not_swap
+	
+	;Encender bandera
+	cmp rax, 1
+	je swap_palabras_process
+
+swap_palabras_process:
     ;Swap las palabras
     ;call swap_palabras
     
-    mov r9, r8
+    mov r9, r8 ;Ahora la primera palabra era la previa segunda palabra
+    mov rdi, array_times
+    add rdi, r8
+    ;inc r8
+    ;mov rdi, array_times
+    call _contEspecial ;Se cuenta la nueva segunda palabra
+    mov r8, [specialLenght] ;Posición de la segunda palabra
+    ;mov r8, 11 ;Posición de la segunda palabra
+    ;dec r8
+    ;push rdi
+    ;push rsi
+    ;push rbx
+    ;push rax
+    ;push r8
+    ;push rdx
+    ;push rcx
+    ;mov rsi, r8
+    ;call _startItoa         ; Llama a la función de conversión a cadena
+    ;pop rcx
+    ;pop rdx
+    ;pop r8
+    ;pop rax
+    ;pop rbx
+    ;pop rsi
+    ;pop rdi
     
-    inc r8
-    inc r8
-    inc r8
+    ;ret
     
-    ret
     jmp _continue_swap
     
 _not_swap:
-    mov r9, r8
-    inc r8
-    inc r8
-    inc r8
+    mov r9, r8 ;Ahora la primera palabra era la previa segunda palabra
+    call _contEspecial ;Se cuenta la nueva segunda palabra
+    mov r8, [specialLenght] ;Posición de la segunda palabra
+    dec r8
     
 _continue_swap:
-    dec rdx
-    jnz _inner_loop
+    dec rdx ;Se decrementan la cantidad de comparaciones entre palabras que se deben hacer
+    jnz _inner_loop ;Se sigue con el loop
     ret
 
 ;-------------------------------------Compare--------------------------
@@ -564,43 +632,46 @@ equals2:
         
     ret
 
-
-
 ;----------------------------------------------------------------------
 
+;Se guardan las palabras en unas variables
 guardar_palabras:
-	mov rcx, palabra1
-    mov r11, palabra2
-	mov r10, 0
-	call limpiar_palabra2
-	call limpiar_palabra1
+	call limpiar_palabra1 ;Función para limpiar todo lo que la variable pueda tener
+	mov r12, r9 ;Guardo la posición de la primera palabra en r12
+	mov r15, r8 ;Guardo la posición de la segunda palabra en r15
+	mov rcx, palabra1 ;Apunta al espacio de memoria de la palabra 1
+	mov r10, 0 ;Índice de posición de la variable palabra1
 	
 cont_guardar:
-	mov bl, [rdi + r15]
-	mov [r11 + r10], bl
-	inc r15
-	inc r10
+	mov al, [rsi + r12] ;Se guarda el char actual en un registro
+	mov [rcx + r10], al ;Se guarda el char en la posición actual de la variable
 	
-	cmp byte [rdi + r15], 10
-	je agregar_siguiente_palabra
+	cmp byte [rsi + r12], 32 ;Se compara con un espacio
+	je agregar_siguiente_palabra ;Si se encuentra se mueve a la siguiente palabra
 	
-	jmp cont_guardar
+	inc r12 ;Se mueve a la siguiente posición
+	inc r10 ;Se mueve a la siguiente posición
+	
+	jmp cont_guardar ;Continuar con el loop
 	
 agregar_siguiente_palabra:
-	mov r10, 0
+	call limpiar_palabra2 ;Función para limpiar todo lo que la variable pueda tener
+    mov r11, palabra2 ;Apunta al espacio de memoria de la palabra 2
+	mov r10, 0 ;Índice de posición de la variable palabra2
 	
 loop_siguiente_palabra:
-	mov al, [rsi + r12]
-	mov [rcx + r10], al
-	inc r12
-	inc r10
+	mov bl, [rsi + r15] ;Se guarda el char actual en un registro
+	mov [r11 + r10], bl ;Se guarda el char en la posición actual de la variable
 	
-	cmp byte [rsi + r12], 10
-	je fin_palabras
+	cmp byte [rsi + r15], 32 ;Se compara con un espacio
+	je fin_palabras ;Si se encuentra se termina la rutina
 	
-	jmp loop_siguiente_palabra
+	inc r15 ;Se mueve a la siguiente posición
+	inc r10 ;Se mueve a la siguiente posición
+	
+	jmp loop_siguiente_palabra ;Continuar con el loop
 
-fin_palabras:
+fin_palabras: ;Se termina la subrutina
 	ret
 
 ;Limpiar palabra 1
@@ -608,10 +679,10 @@ limpiar_palabra1:
 	push rdi
 	push rcx
 	push rax
-	mov rdi, palabra1   ; Set the destination index to palabra1
-    mov rcx, 2050      ; Set the loop counter to the size of palabra1
-    xor al, al         ; Set AL to zero
-    rep stosb          ; Store zero bytes in palabra1
+	mov rdi, palabra1 ;Se coloca el índice de la variable que se desea limpiar
+    mov rcx, 2050 ;Tamaño de la palabra
+    xor al, al ;El registro AL guarda un 0
+    rep stosb ;Se guardan los bytes en la variable
     pop rax
     pop rcx
     pop rdi
@@ -623,20 +694,52 @@ limpiar_palabra2:
 	push rdi
 	push rcx
 	push rax
-	mov rdi, palabra2   ; Set the destination index to palabra1
-    mov rcx, 2050      ; Set the loop counter to the size of palabra1
-    xor al, al         ; Set AL to zero
-    rep stosb          ; Store zero bytes in palabra1
+	mov rdi, palabra2 ;Se coloca el índice de la variable que se desea limpiar
+    mov rcx, 2050 ;Tamaño de la palabra
+    xor al, al ;El registro AL guarda un 0
+    rep stosb ;Se guardan los bytes en la variable
     pop rax
     pop rcx
     pop rdi
     
 	ret
 
+;Se intercambian las palabras de lugar
 swap_palabras:
-	mov r10, r9
+	mov rbx, palabra2
+	call _strLength
+	
+swap_palabra_2:
+    push rsi
+    push rdi
+    push rcx
+    mov rcx, [strLenght] ;Cuantos bytes se quieren copiar
+    mov rsi, palabra2 ;La dirección de la palabra que se va a copiar
+    mov rdi, array_times ;Donde es que se va a copiar la palabra
+    rep movsb ;Copiar los bytes en la dirección de memoria
+    pop rcx
+    pop rdi
+    pop rsi
 
-get_word_length:
+swap_palabra_1:
+    mov rbx, palabra1
+	call _strLength
+    mov rdi, array_times
+    mov r15, 3
+    
+    push rsi
+    push rdi
+    push rcx
+    mov rcx, [strLenght] ;Cuantos bytes se quieren copiar
+    mov rsi, palabra1 ;La dirección de la palabra que se va a copiar
+    add rdi, r15 ;Donde es que se va a copiar la palabra
+    rep movsb ;Copiar los bytes en la dirección de memoria
+    pop rcx
+    pop rdi
+    pop rsi
+    
+    ret
+		
 
 
 ;ITOA  
