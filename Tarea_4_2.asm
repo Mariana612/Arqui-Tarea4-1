@@ -11,8 +11,12 @@ section .data
 	space db ' ', 0
 	array_size equ 2050          ; Tamaño máximo del array
     array_times times array_size db 0
-    msgTest dq "hola "
     strLenght dq 0
+    specialLenght dq 0
+    
+    msgTest dq "hola " 						; ELIMINAR SOLO SE USA PARA EJEMPLO
+    array_timesTest db "pantufla vaca caballo serpiente " 	; ELIMINAR SOLO SE USA PARA EJEMPLO
+    array_timesTest2 db "holaCarmen vaca caballo serpiente " 	; ELIMINAR SOLO SE USA PARA EJEMPLO
 
     
 
@@ -27,12 +31,20 @@ section .text
     global _start
 
 _start:
-	;mov rbx, msgTest
-	;call _strLength
-	;mov qword[msgTest], "xd "
-	;mov rbx, msgTest
-	;call _strLength
-	;jmp _finishCode ;Testeo
+	;mov rbx, msgTest			; ELIMINAR SOLO SE USA PARA EJEMPLO
+	;call _strLength			; ELIMINAR SOLO SE USA PARA EJEMPLO
+	;mov qword[msgTest], "xd "		; ELIMINAR SOLO SE USA PARA EJEMPLO
+	;mov rbx, msgTest			; ELIMINAR SOLO SE USA PARA EJEMPLO
+	;call _strLength			; ELIMINAR SOLO SE USA PARA EJEMPLO
+
+	;mov rdi, array_timesTest		; ELIMINAR SOLO SE USA PARA EJEMPLO
+	;call _contEspecial			; ELIMINAR SOLO SE USA PARA EJEMPLO
+	
+	;mov rdi, array_timesTest2		; ELIMINAR SOLO SE USA PARA EJEMPLO
+	;call _contEspecial			; ELIMINAR SOLO SE USA PARA EJEMPLO
+	
+
+	jmp _finishCode ;Testeo			; ELIMINAR SOLO SE USA PARA EJEMPLO
 	
     call _openFile		; Abre el archivo a leer
 
@@ -130,10 +142,40 @@ _end_loop:
     mov qword [strLenght], rcx ; Guarda la longitud en la variable strLenght
     pop rbx                   ; Restaura el valor original de RBX
 
-    mov rsi, [strLenght]
-    call _startItoa
+    ;mov rsi, [strLenght]	; ELIMINAR SOLO SE USA PARA EJEMPLO
+    ;call _startItoa		; ELIMINAR SOLO SE USA PARA EJEMPLO
 
     ret                       ; Retorna de la función
+
+_contEspecial:
+    mov qword[specialLenght], 0
+    push rcx
+    push rax
+
+    xor rcx, rcx                                     ; rcx será nuestro contador de caracteres
+    xor rax, rax                                     ; rax almacena temporalmente los resultados
+
+primer_espacio:
+    cmp byte [rdi], 32                               ; Compara con espacio (ASCII 32)
+    je segundo_espacio                               ; Si es espacio, pasa al segundo espacio
+    inc rcx                                          ; Incrementa contador de caracteres
+    inc rdi                                          ; Siguiente caracter
+    jmp primer_espacio                               ; Continúa el bucle
+
+segundo_espacio:
+    inc rcx                                          ; Incluye el espacio en la cuenta
+    inc rdi                                          ; Salta el espacio
+    cmp byte [rdi], 32                               ; Comprueba si el siguiente caracter también es un espacio
+    je segundo_espacio                               ; Si hay otro espacio, sigue buscando
+
+    mov [specialLenght], rcx
+    mov rsi, [specialLenght]	; ELIMINAR SOLO SE USA PARA EJEMPLO
+    call _startItoa		; ELIMINAR SOLO SE USA PARA EJEMPLO
+
+    pop rax
+    pop rcx
+
+    ret                                              ; Retorna de la función
 
        
 _openFile:
