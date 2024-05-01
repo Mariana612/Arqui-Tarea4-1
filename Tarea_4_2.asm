@@ -17,6 +17,8 @@ section .data
 section .bss 
     buffer resb 2050
     nuevo_buffer resb 2050
+    palabra1 resb 2050
+    palabra2 resb 2050
     
 
 section .text
@@ -66,8 +68,8 @@ _start:
     mov edi, array_times
     call extract_words
 
-    mov rdi, array_times
-    call print_array
+    ;mov rdi, array_times
+    ;call print_array
     
     ;Imprimir un espacio
     mov rax, 1          
@@ -78,10 +80,15 @@ _start:
     
     dec r13
     call sort_words
-    call sort_words
     
-    mov rdi, array_times
-    call print_array
+    mov rax, palabra1	; Mostrar el recuento de palabras	
+    call _genericprint
+    
+    mov rax, palabra2	; Mostrar el recuento de palabras	
+    call _genericprint
+    
+    ;mov rdi, array_times
+    ;call print_array
     
     
     ; Cerrar el archivo
@@ -388,10 +395,13 @@ sort_words:
 
     mov rsi, array_times     ;Colocar rsi al inicio del array
     mov rdi, array_times     ;Colocar rdi al inicio del array
-    mov r8, 2 ;Cantidad de espacios para seguir con la siguiente palabra
+    mov r8, 4 ;Cantidad de espacios para seguir con la siguiente palabra
     mov r9, 0
     
 _inner_loop:
+	mov r12, r9
+	mov r15, r8
+	call guardar_palabras
     ; Comparar la primera letra de la primera palabra con la primera letra de la segunda palabra
     mov al, [rsi + r9]      ;Load la primera letra de la palabra actual a un registro
     mov bl, [rdi + r8]  ;Load la primera letra de la siguiente palabra a un registro
@@ -399,27 +409,101 @@ _inner_loop:
     jbe _not_swap       ; Jump so no se necesita hacer un swap
     
     ;Swap las palabras
-    mov [rdi + r8], al      ;Guardar la letra de la palabra actual en el espacio de la siguiente palabra
-    mov [rsi + r9], bl      ;Guardar la letra de la siguiente palabra en el espacio de la palabra actual
+    call swap_palabras
     
     mov r9, r8
     
     inc r8
     inc r8
+    inc r8
     
+    ret
     jmp _continue_swap
     
 _not_swap:
     mov r9, r8
     inc r8
     inc r8
+    inc r8
     
 _continue_swap:
-    dec rdx            ; Decrement outer loop counter
-    jnz _inner_loop     ; Continue outer loop until rdx is zero
-    
+    dec rdx
+    jnz _inner_loop
     ret
-  
+
+
+guardar_palabras:
+	mov rcx, palabra1
+    mov r11, palabra2
+	mov r10, 0
+	call limpiar_palabra2
+	call limpiar_palabra1
+	
+cont_guardar:
+	mov bl, [rdi + r15]
+	mov [r11 + r10], bl
+	inc r15
+	inc r10
+	
+	cmp byte [rdi + r15], 10
+	je agregar_siguiente_palabra
+	
+	jmp cont_guardar
+	
+agregar_siguiente_palabra:
+	mov r10, 0
+	
+loop_siguiente_palabra:
+	mov al, [rsi + r12]
+	mov [rcx + r10], al
+	inc r12
+	inc r10
+	
+	cmp byte [rsi + r12], 10
+	je fin_palabras
+	
+	jmp loop_siguiente_palabra
+
+fin_palabras:
+	ret
+
+;Limpiar palabra 1
+limpiar_palabra1:
+	push rdi
+	push rcx
+	push rax
+	mov rdi, palabra1   ; Set the destination index to palabra1
+    mov rcx, 2050      ; Set the loop counter to the size of palabra1
+    xor al, al         ; Set AL to zero
+    rep stosb          ; Store zero bytes in palabra1
+    pop rax
+    pop rcx
+    pop rdi
+    
+	ret
+
+;Limpiar palabra 2	
+limpiar_palabra2:
+	push rdi
+	push rcx
+	push rax
+	mov rdi, palabra2   ; Set the destination index to palabra1
+    mov rcx, 2050      ; Set the loop counter to the size of palabra1
+    xor al, al         ; Set AL to zero
+    rep stosb          ; Store zero bytes in palabra1
+    pop rax
+    pop rcx
+    pop rdi
+    
+	ret
+
+swap_palabras:
+	mov r10, r9
+
+get_word_length:
+
+
+;ITOA  
 _startItoa:
     mov rdi, buffer
     mov rsi, rsi 
