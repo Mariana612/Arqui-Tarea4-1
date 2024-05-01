@@ -12,6 +12,7 @@ section .data
 	array_size equ 2050          ; Tamaño máximo del array
     array_times times array_size db 0
 
+
     
 
 section .bss 
@@ -81,11 +82,11 @@ _start:
     dec r13
     call sort_words
     
-    mov rax, palabra1	; Mostrar el recuento de palabras	
-    call _genericprint
+    ;mov rax, palabra1	; Mostrar el recuento de palabras	
+    ;call _genericprint
     
-    mov rax, palabra2	; Mostrar el recuento de palabras	
-    call _genericprint
+    ;mov rax, palabra2	; Mostrar el recuento de palabras	
+    ;call _genericprint
     
     ;mov rdi, array_times
     ;call print_array
@@ -405,11 +406,14 @@ _inner_loop:
     ; Comparar la primera letra de la primera palabra con la primera letra de la segunda palabra
     mov al, [rsi + r9]      ;Load la primera letra de la palabra actual a un registro
     mov bl, [rdi + r8]  ;Load la primera letra de la siguiente palabra a un registro
-    cmp al, bl         ; Comparar las letras
-    jbe _not_swap       ; Jump so no se necesita hacer un swap
-    
+    xor rax, rax
+    call compare_words         ; Comparar las letras
+    cmp rax, 2
+    je _not_swap       ; Jump si no se necesita hacer un swap
+    cmp rax, 1
+    je _continue_swap
     ;Swap las palabras
-    call swap_palabras
+    ;call swap_palabras
     
     mov r9, r8
     
@@ -431,6 +435,65 @@ _continue_swap:
     jnz _inner_loop
     ret
 
+;-------------------------------------Compare--------------------------
+
+compare_words:
+	
+    mov rdi, test1    ; Load address of first word into rdi
+    mov rsi, test2    ; Load address of second word into rsi
+    
+    call compare_loop     ; Call the comparison function
+    
+
+compare_loop:
+
+    mov al, byte [rdi]  
+    mov bl, byte [rsi]
+
+    
+    cmp al, bl          
+    jne compare_result   
+    
+    
+    inc rdi              
+    inc rsi          
+ 
+    
+    cmp al, " "
+    jne compare_loop
+    je equal
+    
+compare_result:
+    cmp al, bl          
+    jb first_word_comes 
+     
+    mov rax, 1  
+
+       
+    ret
+
+first_word_comes:
+    mov rax, 2  
+    
+      
+    ret
+ 
+    
+equal:
+	cmp bl, " "
+	je equals2
+	mov rax, 1
+	
+	
+	ret
+equals2:
+    mov rax, 3  
+        
+    ret
+
+
+
+;----------------------------------------------------------------------
 
 guardar_palabras:
 	mov rcx, palabra1
