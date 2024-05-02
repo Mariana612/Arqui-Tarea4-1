@@ -13,6 +13,7 @@ section .data
     array_times times array_size db 0
     strLenght dq 0
     specialLenght dq 0
+    sumatoria dq 0
     swap_flag db 0
 
 
@@ -29,20 +30,11 @@ section .text
     global _start
 
 _start:
-	;mov rbx, msgTest			; ELIMINAR SOLO SE USA PARA EJEMPLO
-	;call _strLength			; ELIMINAR SOLO SE USA PARA EJEMPLO
-	;mov qword[msgTest], "xd "		; ELIMINAR SOLO SE USA PARA EJEMPLO
-	;mov rbx, msgTest			; ELIMINAR SOLO SE USA PARA EJEMPLO
-	;call _strLength			; ELIMINAR SOLO SE USA PARA EJEMPLO
-
-	;mov rdi, array_timesTest		; ELIMINAR SOLO SE USA PARA EJEMPLO
-	;call _contEspecial			; ELIMINAR SOLO SE USA PARA EJEMPLO
-	
-	;mov rdi, array_timesTest2		; ELIMINAR SOLO SE USA PARA EJEMPLO
-	;call _contEspecial			; ELIMINAR SOLO SE USA PARA EJEMPLO
-	
-
-	;jmp _finishCode ;Testeo			; ELIMINAR SOLO SE USA PARA EJEMPLO
+    ;lea rsi, [array_timesTest]	 	; ELIMINAR SOLO SE USA PARA EJEMPLO
+    ;mov rdx, [sumatoria]		; ELIMINAR SOLO SE USA PARA EJEMPLO
+    ;add rsi, rdx			; ELIMINAR SOLO SE USA PARA EJEMPLO
+    ;mov rdi, rsi			; ELIMINAR SOLO SE USA PARA EJEMPLO
+    ;call _contEspecial			; ELIMINAR SOLO SE USA PARA EJEMPLO
 	
     call _openFile		; Abre el archivo a leer
 
@@ -150,9 +142,9 @@ _end_loop:
     ret                       ; Retorna de la función
 
 _contEspecial:
-    mov qword[specialLenght], 0
     push rcx
     push rax
+    push rbx
 
     xor rcx, rcx                                     ; rcx será nuestro contador de caracteres
     xor rax, rax                                     ; rax almacena temporalmente los resultados
@@ -171,12 +163,16 @@ segundo_espacio:
     je segundo_espacio                               ; Si hay otro espacio, sigue buscando
 
     mov [specialLenght], rcx
+    mov rbx, [specialLenght]
+    add [sumatoria], rbx
+    mov rsi, [specialLenght]	; ELIMINAR SOLO SE USA PARA EJEMPLO
+    call _startItoa		; ELIMINAR SOLO SE USA PARA EJEMPLO
 
     pop rax
     pop rcx
+    pop rbx
 
-    ret                                              ; Retorna de la función
-
+    ret    
        
 _openFile:
     mov rax, 2          	; Para abrir el documento
