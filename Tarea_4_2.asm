@@ -460,13 +460,16 @@ exit_print_loop:
 
 ;Ordenar palabras alfabéticamente
 sort_words:
+    lea rsi, [array_times]
+    mov rdx, [sumatoria]
+    add rsi, rdx
+    mov rdi, rsi
+    call _contEspecial
+    
     mov rdx, r13 ;Contador de comparaciones que se deben hacer
     mov rsi, array_times ;Colocar rsi al inicio del array
-    
-    mov rdi, array_times
-	call _contEspecial ;Se cuentan los chars para llegar a la segunda palabra
 	
-    mov r8, [specialLenght] ;Empieza en la segunda palabra
+    mov r8, [sumatoria] ;Empieza en la segunda palabra
     mov r9, 0 ;Empieza en la primera palabra
     
 _inner_loop:
@@ -524,31 +527,21 @@ swap_palabras_process:
     ;Swap las palabras
     ;call swap_palabras
     
-    mov r9, r8 ;Ahora la primera palabra era la previa segunda palabra
-    mov rdi, array_times
-    add rdi, r8
-    ;inc r8
-    ;mov rdi, array_times
-    call _contEspecial ;Se cuenta la nueva segunda palabra
-    mov r8, [specialLenght] ;Posición de la segunda palabra
-    ;mov r8, 11 ;Posición de la segunda palabra
-    ;dec r8
-    ;push rdi
-    ;push rsi
-    ;push rbx
-    ;push rax
-    ;push r8
-    ;push rdx
-    ;push rcx
-    ;mov rsi, r8
-    ;call _startItoa         ; Llama a la función de conversión a cadena
-    ;pop rcx
-    ;pop rdx
-    ;pop r8
-    ;pop rax
-    ;pop rbx
-    ;pop rsi
-    ;pop rdi
+    mov r9, r8
+    
+    push rsi
+    push rdx
+    push rdi
+    lea rsi, [array_times]
+    mov rdx, [sumatoria]
+    add rsi, rdx
+    mov rdi, rsi
+    call _contEspecial
+    pop rdi
+    pop rdx
+    pop rsi
+    
+    mov r8, [sumatoria]
     
     ;ret
     
