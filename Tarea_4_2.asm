@@ -13,6 +13,7 @@ section .data
     array_times times array_size db 0
     strLenght dq 0
     specialLenght dq 0
+    swap_flag db 0
 
 
     
@@ -476,17 +477,7 @@ _inner_loop:
 	mov r12, r9
 	mov r15, r8
 	call guardar_palabras
-    ;Comparar la primera letra de la primera palabra con la primera letra de la segunda palabra
-    mov al, [rsi + r9]      ;Load la primera letra de la palabra actual a un registro
-    mov bl, [rdi + r8]  ;Load la primera letra de la siguiente palabra a un registro
-    xor rax, rax
-    call compare_words         ; Comparar las letras
-    cmp rax, 2
-    je _not_swap       ; Jump si no se necesita hacer un swap
-    cmp rax, 1
-    je _continue_swap
-	;Apagar bandera
-	call guardar_palabras ;Función donde se guardan las palabras que se van a comparar
+	mov byte [swap_flag], 0
 	
 	push rax
 	push rdi
@@ -521,13 +512,15 @@ _inner_loop:
     pop rax
     
 compare_palabras:
+	xor rax, rax
+    call compare_words         ; Comparar las letras
 	cmp rax, 2
 	je _not_swap
 	
 	cmp rax, 3
 	je _not_swap
 	
-	;Encender bandera
+	mov byte [swap_flag], 1;Encender bandera
 	cmp rax, 1
 	je swap_palabras_process
 
@@ -570,18 +563,20 @@ _not_swap:
     call _contEspecial ;Se cuenta la nueva segunda palabra
     mov r8, [specialLenght] ;Posición de la segunda palabra
     dec r8
-    
+
 _continue_swap:
     dec rdx ;Se decrementan la cantidad de comparaciones entre palabras que se deben hacer
     jnz _inner_loop ;Se sigue con el loop
+    ;cmp byte [swap_flag], 1
+    ;je sort_words
     ret
 
 ;-------------------------------------Compare--------------------------
 
 compare_words:
 	
-    mov rdi, test1    ; Load address of first word into rdi
-    mov rsi, test2    ; Load address of second word into rsi
+    mov rdi, palabra1    ; Load address of first word into rdi
+    mov rsi, palabra2    ; Load address of second word into rsi
     
     call compare_loop     ; Call the comparison function
     
