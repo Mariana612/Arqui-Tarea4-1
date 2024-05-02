@@ -95,9 +95,6 @@ _start:
     ;mov rax, palabra1	; Mostrar el recuento de palabras	
     ;call _genericprint
     
-    ;mov rax, palabra1	; Mostrar el recuento de palabras	
-    ;call _genericprint
-    
     ;mov rax, palabra2	; Mostrar el recuento de palabras	
     ;call _genericprint
     
@@ -136,8 +133,8 @@ _end_loop:
     pop rcx
     pop rbx                   ; Restaura el valor original de RBX
 
-    mov rsi, [strLenght]
-    call _startItoa         ; Llama a la función de conversión a cadena
+    ;mov rsi, [strLenght]
+    ;call _startItoa         ; Llama a la función de conversión a cadena
     
     ret                       ; Retorna de la función
 
@@ -165,8 +162,8 @@ segundo_espacio:
     mov [specialLenght], rcx
     mov rbx, [specialLenght]
     add [sumatoria], rbx
-    mov rsi, [specialLenght]	; ELIMINAR SOLO SE USA PARA EJEMPLO
-    call _startItoa		; ELIMINAR SOLO SE USA PARA EJEMPLO
+    ;mov rsi, [specialLenght]	; ELIMINAR SOLO SE USA PARA EJEMPLO
+    ;call _startItoa		; ELIMINAR SOLO SE USA PARA EJEMPLO
 
     pop rax
     pop rcx
@@ -467,14 +464,16 @@ sort_words:
     call _contEspecial
     
     mov rdx, r13 ;Contador de comparaciones que se deben hacer
+    mov rsi, r13
+    call _startItoa
+    
     mov rsi, array_times ;Colocar rsi al inicio del array
-	
     mov r8, [sumatoria] ;Empieza en la segunda palabra
     mov r9, 0 ;Empieza en la primera palabra
     
 _inner_loop:
-	mov r12, r9
-	mov r15, r8
+	mov r12, r9 ;Guardo la posición de la primera palabra en r12
+	mov r15, r8 ;Guardo la posición de la segunda palabra en r15
 	call guardar_palabras
 	mov byte [swap_flag], 0
 	
@@ -509,28 +508,35 @@ _inner_loop:
     pop rsi
     pop rdi
     pop rax
-    
+
 compare_palabras:
+	push rax
+	push rdi
+	push rsi
 	xor rax, rax
     call compare_words         ; Comparar las letras
+    
 	cmp rax, 2
 	je _not_swap
 	
 	cmp rax, 3
 	je _not_swap
 	
-	mov byte [swap_flag], 1;Encender bandera
+	;mov byte [swap_flag], 1;Encender bandera
 	cmp rax, 1
 	je swap_palabras_process
 
 swap_palabras_process:
     ;Swap las palabras
     ;call swap_palabras
-    
+    pop rsi
+	pop rdi
+	pop rax
+	
     mov r9, r8
     
     push rsi
-    push rdx
+	push rdx
     push rdi
     lea rsi, [array_times]
     mov rdx, [sumatoria]
@@ -544,14 +550,28 @@ swap_palabras_process:
     mov r8, [sumatoria]
     
     ;ret
-    
     jmp _continue_swap
     
 _not_swap:
-    mov r9, r8 ;Ahora la primera palabra era la previa segunda palabra
-    call _contEspecial ;Se cuenta la nueva segunda palabra
-    mov r8, [specialLenght] ;Posición de la segunda palabra
-    dec r8
+	pop rsi
+	pop rdi
+	pop rax
+	
+	mov r9, r8
+    
+    push rsi
+	push rdx
+    push rdi
+    lea rsi, [array_times]
+    mov rdx, [sumatoria]
+    add rsi, rdx
+    mov rdi, rsi
+    call _contEspecial
+    pop rdi
+    pop rdx
+    pop rsi
+    
+    mov r8, [sumatoria]
 
 _continue_swap:
     dec rdx ;Se decrementan la cantidad de comparaciones entre palabras que se deben hacer
@@ -563,7 +583,7 @@ _continue_swap:
 ;-------------------------------------Compare--------------------------
 
 compare_words:
-	
+    
     mov rdi, palabra1    ; Load address of first word into rdi
     mov rsi, palabra2    ; Load address of second word into rsi
     
@@ -621,8 +641,6 @@ equals2:
 ;Se guardan las palabras en unas variables
 guardar_palabras:
 	call limpiar_palabra1 ;Función para limpiar todo lo que la variable pueda tener
-	mov r12, r9 ;Guardo la posición de la primera palabra en r12
-	mov r15, r8 ;Guardo la posición de la segunda palabra en r15
 	mov rcx, palabra1 ;Apunta al espacio de memoria de la palabra 1
 	mov r10, 0 ;Índice de posición de la variable palabra1
 	
@@ -639,7 +657,7 @@ cont_guardar:
 	jmp cont_guardar ;Continuar con el loop
 	
 agregar_siguiente_palabra:
-	call limpiar_palabra2 ;Función para limpiar todo lo que la variable pueda tener
+	;call limpiar_palabra2 ;Función para limpiar todo lo que la variable pueda tener
     mov r11, palabra2 ;Apunta al espacio de memoria de la palabra 2
 	mov r10, 0 ;Índice de posición de la variable palabra2
 	
@@ -709,7 +727,7 @@ swap_palabra_1:
     mov rbx, palabra1
 	call _strLength
     mov rdi, array_times
-    mov r15, 3
+    mov r15, 6
     
     push rsi
     push rdi
