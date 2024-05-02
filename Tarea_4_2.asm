@@ -91,12 +91,6 @@ _start:
     
     dec r13
     call sort_words
-   
-    ;mov rax, palabra1	; Mostrar el recuento de palabras	
-    ;call _genericprint
-    
-    ;mov rax, palabra2	; Mostrar el recuento de palabras	
-    ;call _genericprint
     
     mov rdi, array_times
     call print_array
@@ -162,8 +156,6 @@ segundo_espacio:
     mov [specialLenght], rcx
     mov rbx, [specialLenght]
     add [sumatoria], rbx
-    ;mov rsi, [specialLenght]	; ELIMINAR SOLO SE USA PARA EJEMPLO
-    ;call _startItoa		; ELIMINAR SOLO SE USA PARA EJEMPLO
 
     pop rax
     pop rcx
@@ -464,8 +456,6 @@ sort_words:
     call _contEspecial
     
     mov rdx, r13 ;Contador de comparaciones que se deben hacer
-    mov rsi, r13
-    call _startItoa
     
     mov rsi, array_times ;Colocar rsi al inicio del array
     mov r8, [sumatoria] ;Empieza en la segunda palabra
@@ -485,12 +475,6 @@ _inner_loop:
     mov rdi, 1          
     mov rsi, palabra1    
     mov rdx, 2050          
-    syscall
-    
-    mov rax, 1          
-    mov rdi, 1          
-    mov rsi, espacio    
-    mov rdx, 1          
     syscall
     
     mov rax, 1          
@@ -527,12 +511,13 @@ compare_palabras:
 	je swap_palabras_process
 
 swap_palabras_process:
-    ;Swap las palabras
-    ;call swap_palabras
     pop rsi
 	pop rdi
 	pop rax
 	
+    ;Swap las palabras
+    call swap_palabras
+    
     mov r9, r8
     
     push rsi
@@ -594,15 +579,12 @@ compare_loop:
 
     mov al, byte [rdi]  
     mov bl, byte [rsi]
-
     
     cmp al, bl          
     jne compare_result   
     
-    
     inc rdi              
     inc rsi          
- 
     
     cmp al, " "
     jne compare_loop
@@ -612,15 +594,11 @@ compare_result:
     cmp al, bl          
     jb first_word_comes 
      
-    mov rax, 1  
-
-       
+    mov rax, 1 
     ret
 
 first_word_comes:
-    mov rax, 2  
-    
-      
+    mov rax, 2     
     ret
  
     
@@ -628,12 +606,9 @@ equal:
 	cmp bl, " "
 	je equals2
 	mov rax, 1
-	
-	
 	ret
 equals2:
-    mov rax, 3  
-        
+    mov rax, 3      
     ret
 
 ;----------------------------------------------------------------------
@@ -708,30 +683,32 @@ limpiar_palabra2:
 
 ;Se intercambian las palabras de lugar
 swap_palabras:
-	mov rbx, palabra2
-	call _strLength
-	
-swap_palabra_2:
-    push rsi
+	push rsi
     push rdi
     push rcx
+	mov rbx, palabra2
+	call _strLength
+	mov rdi, array_times
+	mov r15, r9
+	
+swap_palabra_2:
     mov rcx, [strLenght] ;Cuantos bytes se quieren copiar
     mov rsi, palabra2 ;La dirección de la palabra que se va a copiar
-    mov rdi, array_times ;Donde es que se va a copiar la palabra
+    add rdi, r15 ;Donde es que se va a copiar la palabra
     rep movsb ;Copiar los bytes en la dirección de memoria
     pop rcx
     pop rdi
     pop rsi
 
 swap_palabra_1:
-    mov rbx, palabra1
-	call _strLength
-    mov rdi, array_times
-    mov r15, 6
-    
     push rsi
     push rdi
     push rcx
+    add r15, [strLenght]
+    mov rbx, palabra1
+	call _strLength
+    mov rdi, array_times
+   
     mov rcx, [strLenght] ;Cuantos bytes se quieren copiar
     mov rsi, palabra1 ;La dirección de la palabra que se va a copiar
     add rdi, r15 ;Donde es que se va a copiar la palabra
@@ -739,6 +716,8 @@ swap_palabra_1:
     pop rcx
     pop rdi
     pop rsi
+    
+    mov r8, r15
     
     ret
 		
